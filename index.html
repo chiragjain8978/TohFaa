@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TOHFAA • Business Suite</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Export libraries for Page 5 -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+  --bg:#0d1020;
+  --panel:#13162b;
+  --panel-2:#0f1226;
+  --muted:#96a0c2;
+  --text:#e9edff;
+  --accent:#79f0c3;
+  --accent-2:#7aa2ff;
+  --danger:#ff6b6b;
+  --ok:#87d37c;
+  --line:rgba(255,255,255,0.08);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:Inter,system-ui,Segoe UI,Arial; color:var(--text);
+  background:linear-gradient(120deg,#0b0e1a, #151938 60%);
+}
+
+/* Header + Nav */
+header{
+  position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.1) blur(8px);
+  background:rgba(13,16,32,.7); border-bottom:1px solid var(--line);
+}
+.header-inner{
+  max-width:1200px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.logo{
+  font-weight:800; letter-spacing:.3px; font-size:16px;
+  padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel);
+}
+nav{
+  display:flex; gap:8px; flex-wrap:wrap; margin-left:auto;
+}
+.tab{
+  background:var(--panel); color:#cfe0ff; border:1px solid var(--line);
+  padding:8px 12px; border-radius:10px; font-weight:600; cursor:pointer; transition:.15s transform ease, .15s background ease;
+}
+.tab.active{ background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#08101e; border:none }
+.tab:active{ transform:translateY(1px) }
+
+/* Layout */
+.container{ max-width:1200px; margin:16px auto 32px; padding:0 16px; }
+.page{
+  display:none; opacity:0; transform:translateY(8px);
+  transition:opacity .25s ease, transform .25s ease;
+}
+.page.active{ display:block; opacity:1; transform:translateY(0) }
+
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  box-shadow:0 10px 28px rgba(0,0,0,.25); padding:14px; margin-bottom:14px;
+}
+.card h2{ margin:0 0 10px; font-size:16px }
+.subtle{ color:var(--muted); font-size:12px }
+
+.grid-2{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px;
+}
+@media (max-width:980px){ .grid-2{ grid-template-columns:1fr } }
+
+/* Inputs + Buttons */
+.row{ display:flex; gap:10px; flex-wrap:wrap }
+.row > *{ flex:1; min-width:180px }
+
+input, select, button, textarea{
+  width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+  background:var(--panel-2); color:var(--text); font-size:14px; outline:none;
+}
+textarea{ min-height:80px; resize:vertical }
+input::placeholder,textarea::placeholder{ color:#9fb0de }
+button{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#0b1322;
+  font-weight:800; border:none; cursor:pointer; transition:.12s transform ease;
+}
+button:active{ transform:translateY(1px) }
+.btn-secondary{ background:#141735; color:#e3ecff; border:1px solid var(--line) }
+.btn-danger{ background:linear-gradient(135deg,#ff7b7b,#ff5b5b); color:#3a0a0a }
+.btn-ghost{ background:transparent; border:1px dashed var(--line); color:#cfe0ff }
+
+/* Tables */
+table{ width:100%; border-collapse:collapse }
+th,td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line) }
+th{ color:#cfe0ff; font-weight:700; font-size:13px }
+
+/* Product list */
+.product{
+  display:grid; grid-template-columns:56px 1fr auto auto auto; gap:10px; align-items:center;
+  padding:10px; border-radius:10px; border:1px solid var(--line); background:#12152a;
+}
+.product img{ width:56px; height:56px; object-fit:cover; border-radius:8px; border:1px solid var(--line) }
+.price{ font-weight:700; color:#d6f5ff }
+
+/* Invoice preview */
+#invoice-preview{
+  background:#ffffff; color:#111; padding:20px; border-radius:10px; max-width:800px; margin:0 auto; border:1px solid #ddd;
+}
+.inv-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px }
+.inv-brand{ font-weight:800; font-size:20px }
+.inv-meta{ text-align:right; font-size:12px; color:#333 }
+.inv-table{ width:100%; border-collapse:collapse; margin-top:8px }
+.inv-table th,.inv-table td{ border:1px solid #ddd; padding:8px; font-size:13px }
+.inv-total{ text-align:right; margin-top:8px; font-weight:800 }
+
+/* Small helpers */
+.badge{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:#121533; color:#b8c9ff; font-size:12px }
+.flex{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.right{ margin-left:auto }
+.hr{ height:1px; background:var(--line); margin:10px 0 }
+
+footer{ color:#97a2c5; font-size:12px; text-align:center; padding:10px 16px }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">TOHFAA • Business Suite</div>
+    <nav id="nav">
+      <button class="tab active" data-page="1">Price</button>
+      <button class="tab" data-page="2">Expenses</button>
+      <button class="tab" data-page="3">Sales</button>
+      <button class="tab" data-page="4">Profit/Loss</button>
+      <button class="tab" data-page="5">Invoice</button>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Page 1: Price List + Calculator -->
+  <section id="page-1" class="page active">
+    <div class="card">
+      <h2>Price List 0–200g</h2>
+      <div class="subtle">Edit your tiers (per-gram rate). The calculator uses the tier that matches the weight.</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn-secondary" onclick="addTierRow()">Add Tier</button>
+        <button onclick="saveTiers()">Save Tiers</button>
+        <button class="btn-ghost" onclick="resetDefaultTiers()">Reset to Default</button>
+      </div>
+      <div class="hr"></div>
+      <table id="tier-table">
+        <thead>
+          <tr><th>Min g</th><th>Max g</th><th>Rate ₹/g</th><th>Remove</th></tr>
+        </thead>
+        <tbody id="tier-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Calculator</h2>
+      <div class="row">
+        <input type="number" id="calc-weight" placeholder="Weight in grams (0–200)" min="0" max="200" />
+        <input type="number" id="calc-extra" placeholder="Extra cost (e.g., packaging)" min="0" />
+        <button onclick="runCalculator()">Calculate</button>
+      </div>
+      <div class="hr"></div>
+      <div class="flex">
+        <div class="badge">Rate: <span id="calc-rate">—</span></div>
+        <div class="badge">Base: ₹<span id="calc-base">0</span></div>
+        <div class="badge">Extra: ₹<span id="calc-extra-show">0</span></div>
+        <div class="badge">Total: ₹<span id="calc-total">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page 2: Expenses -->
+  <section id="page-2" class="page">
+    <div class="card">
+      <h2>Add Expense</h2>
+      <div class="row">
+        <input type="date" id="exp-date" />
+        <input type="number" id="exp-amount" placeholder="Amount ₹" min="0" />
+        <input type="text" id="exp-note" placeholder="Note" />
+        <button onclick="addExpense()">Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Expenses</h2>
+      <div class="subtle">Track and delete items as needed.</div>
+      <table>
+        <thead><tr><th>Date</th><th>Amount</th><th>Note</th><th>Remove</th></tr></thead>
+        <tbody id="exp-tbody"></tbody>
+      </table>
+      <div class="hr"></div>
+      <div class="flex">
+        <div class="badge">Total: ₹<span id="exp-total">0</span></div>
+        <button class="btn-danger right" onclick="clearExpenses()">Clear All</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page 3: Sales -->
+  <section id="page-3" class="page">
+    <div class="card">
+      <h2>Add Sale</h2>
+      <div class="row">
+        <input type="date" id="sale-date" />
+        <input type="number" id="sale-amount" placeholder="Amount ₹" min="0" />
+        <input type="text" id="sale-invoice" placeholder="Invoice link or number (optional)" />
+        <input type="text" id="sale-note" placeholder="Note (optional)" />
+        <button onclick="addSale()">Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Sales</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Amount</th><th>Invoice</th><th>Note</th><th>Remove</th></tr></thead>
+        <tbody id="sale-tbody"></tbody>
+      </table>
+      <div class="hr"></div>
+      <div class="flex">
+        <div class="badge">Total: ₹<span id="sale-total">0</span></div>
+        <button class="btn-danger right" onclick="clearSales()">Clear All</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page 4: Profit/Loss -->
+  <section id="page-4" class="page">
+    <div class="card">
+      <h2>Profit / Loss</h2>
+      <div class="row">
+        <input type="date" id="pl-from" />
+        <input type="date" id="pl-to" />
+        <button onclick="updateProfitLoss()">Update</button>
+        <button class="btn-secondary" onclick="setQuickRange('7')">Last 7 days</button>
+        <button class="btn-secondary" onclick="setQuickRange('30')">Last 30 days</button>
+        <button class="btn-secondary" onclick="setQuickRange('month')">This Month</button>
+      </div>
+      <div class="hr"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>Sales in range</h2>
+          <div class="badge">₹<span id="pl-sales">0</span></div>
+        </div>
+        <div class="card">
+          <h2>Expenses in range</h2>
+          <div class="badge">₹<span id="pl-expenses">0</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Net Profit</h2>
+        <div class="badge" id="pl-net-badge">₹<span id="pl-net">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page 5: Invoice + Inventory -->
+  <section id="page-5" class="page">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <h2>Add New Product</h2>
+          <div class="row">
+            <input type="text" id="p-name" placeholder="Product name" />
+            <input type="number" id="p-price" placeholder="Price ₹" min="0" />
+            <input type="text" id="p-image" placeholder="Image URL (optional)" />
+            <button onclick="saveProduct()">Save Product</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Inventory</h2>
+          <div id="inventory-list"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Cart</h2>
+          <table>
+            <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th><th>Remove</th></tr></thead>
+            <tbody id="cart-tbody"></tbody>
+          </table>
+          <div class="hr"></div>
+          <div class="flex">
+            <div class="badge">Total: ₹<span id="cart-total">0</span></div>
+            <button class="btn-ghost right" onclick="clearCart()">Clear Cart</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Customer</h2>
+          <div class="row">
+            <input type="text" id="c-name" placeholder="Customer name" />
+            <input type="text" id="c-phone" placeholder="Phone number" />
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Create Invoice</h2>
+          <div class="row">
+            <button onclick="generateInvoice()">Save Invoice</button>
+            <button class="btn-secondary" onclick="previewLatestInvoice()">Preview</button>
+            <button class="btn-secondary" onclick="downloadLatestInvoicePDF()">Download PDF</button>
+            <button class="btn-secondary" onclick="downloadLatestInvoicePNG()">Download Image</button>
+          </div>
+          <div class="hr"></div>
+          <div id="invoice-preview" style="display:none"></div>
+        </div>
+
+        <div class="card">
+          <h2>Invoice History</h2>
+          <table>
+            <thead><tr><th>No.</th><th>Date</th><th>Customer</th><th>Total</th><th>Actions</th></tr></thead>
+            <tbody id="inv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>Data is stored in your browser (localStorage). Clear it from your browser settings to reset.</footer>
+
+<script>
+/* ----- Storage helpers ----- */
+const ls = {
+  get: (k, v=undefined) => {
+    try { const d = JSON.parse(localStorage.getItem(k)); return d ?? v; }
+    catch(e){ return v; }
+  },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+};
+
+/* ----- Navigation ----- */
+const tabs = document.querySelectorAll('.tab');
+const pages = {
+  1: document.getElementById('page-1'),
+  2: document.getElementById('page-2'),
+  3: document.getElementById('page-3'),
+  4: document.getElementById('page-4'),
+  5: document.getElementById('page-5'),
+};
+tabs.forEach(t => t.addEventListener('click', () => showPage(t.dataset.page)));
+
+function showPage(n){
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.page==n));
+  Object.values(pages).forEach(p => p.classList.remove('active'));
+  pages[n].classList.add('active');
+}
+
+/* ----- Page 1: Tiers + Calculator ----- */
+function defaultTiers(){
+  return [
+    {min:0, max:50,  rate:5},
+    {min:51, max:100, rate:4.5},
+    {min:101,max:150, rate:4.0},
+    {min:151,max:200, rate:3.5}
+  ];
+}
+let tiers = ls.get('tiers', defaultTiers());
+
+const tierTbody = document.getElementById('tier-tbody');
+function renderTiers(){
+  tierTbody.innerHTML = '';
+  tiers.forEach((t,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="number" value="${t.min}" min="0" onchange="updateTier(${i}, 'min', this.value)"></td>
+      <td><input type="number" value="${t.max}" min="0" onchange="updateTier(${i}, 'max', this.value)"></td>
+      <td><input type="number" value="${t.rate}" step="0.1" min="0" onchange="updateTier(${i}, 'rate', this.value)"></td>
+      <td><button class="btn-danger" onclick="removeTier(${i})">Delete</button></td>
+    `;
+    tierTbody.appendChild(tr);
+  });
+}
+function updateTier(i, key, val){
+  tiers[i][key] = key==='rate' ? parseFloat(val) : parseInt(val);
+}
+function addTierRow(){ tiers.push({min:0,max:0,rate:0}); renderTiers(); }
+function removeTier(i){ tiers.splice(i,1); renderTiers(); }
+function saveTiers(){ ls.set('tiers', tiers); alert('Tiers saved'); }
+function resetDefaultTiers(){ tiers = defaultTiers(); renderTiers(); saveTiers(); }
+
+function findRateForWeight(g){
+  for (const t of tiers){
+    if (g >= t.min && g <= t.max) return t.rate;
+  }
+  return 0;
+}
+function runCalculator(){
+  const g = parseFloat(document.getElementById('calc-weight').value||0);
+  const extra = parseFloat(document.getElementById('calc-extra').value||0);
+  const rate = findRateForWeight(g);
+  const base = g * rate;
+  const total = base + extra;
+  document.getElementById('calc-rate').textContent = rate ? `₹${rate}/g` : '—';
+  document.getElementById('calc-base').textContent = base.toFixed(2);
+  document.getElementById('calc-extra-show').textContent = extra.toFixed(2);
+  document.getElementById('calc-total').textContent = total.toFixed(2);
+}
+
+/* ----- Page 2: Expenses ----- */
+let expenses = ls.get('expenses', []);
+const expTbody = document.getElementById('exp-tbody');
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+document.getElementById('exp-date').value = todayISO();
+
+function addExpense(){
+  const date = document.getElementById('exp-date').value || todayISO();
+  const amount = parseFloat(document.getElementById('exp-amount').value||0);
+  const note = document.getElementById('exp-note').value||'';
+  if (!amount) return alert('Enter amount');
+  expenses.push({id:Date.now(), date, amount, note});
+  ls.set('expenses', expenses);
+  document.getElementById('exp-amount').value = '';
+  document.getElementById('exp-note').value = '';
+  renderExpenses();
+}
+function removeExpense(id){
+  expenses = expenses.filter(e=>e.id!==id);
+  ls.set('expenses', expenses);
+  renderExpenses();
+}
+function clearExpenses(){
+  if(!confirm('Clear all expenses?')) return;
+  expenses = []; ls.set('expenses', expenses); renderExpenses();
+}
+function renderExpenses(){
+  expTbody.innerHTML = '';
+  let total = 0;
+  expenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    total += e.amount;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${e.date}</td>
+      <td>₹${e.amount.toFixed(2)}</td>
+      <td>${e.note}</td>
+      <td><button class="btn-danger" onclick="removeExpense(${e.id})">Delete</button></td>
+    `;
+    expTbody.appendChild(tr);
+  });
+  document.getElementById('exp-total').textContent = total.toFixed(2);
+}
+
+/* ----- Page 3: Sales ----- */
+let sales = ls.get('sales', []);
+const saleTbody = document.getElementById('sale-tbody');
+document.getElementById('sale-date').value = todayISO();
+
+function addSale(){
+  const date = document.getElementById('sale-date').value || todayISO();
+  const amount = parseFloat(document.getElementById('sale-amount').value||0);
+  const invoice = document.getElementById('sale-invoice').value||'';
+  const note = document.getElementById('sale-note').value||'';
+  if (!amount) return alert('Enter amount');
+  sales.push({id:Date.now(), date, amount, invoice, note});
+  ls.set('sales', sales);
+  document.getElementById('sale-amount').value = '';
+  document.getElementById('sale-invoice').value = '';
+  document.getElementById('sale-note').value = '';
+  renderSales();
+}
+function removeSale(id){
+  sales = sales.filter(s=>s.id!==id);
+  ls.set('sales', sales);
+  renderSales();
+}
+function clearSales(){
+  if(!confirm('Clear all sales?')) return;
+  sales = []; ls.set('sales', sales); renderSales();
+}
+function renderSales(){
+  saleTbody.innerHTML = '';
+  let total = 0;
+  sales.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{
+    total += s.amount;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${s.date}</td>
+      <td>₹${s.amount.toFixed(2)}</td>
+      <td>${s.invoice || ''}</td>
+      <td>${s.note || ''}</td>
+      <td><button class="btn-danger" onclick="removeSale(${s.id})">Delete</button></td>
+    `;
+    saleTbody.appendChild(tr);
+  });
+  document.getElementById('sale-total').textContent = total.toFixed(2);
+}
+
+/* ----- Page 4: Profit/Loss ----- */
+function parseISO(d){ return new Date(d+'T00:00:00'); }
+function sumInRange(arr, from, to){
+  return arr.filter(x=>{
+    const dx = parseISO(x.date).getTime();
+    return dx >= from && dx <= to;
+  }).reduce((s,x)=>s+(x.amount||0),0);
+}
+function setQuickRange(mode){
+  const now = new Date();
+  let from, to=new Date();
+  if(mode==='7'){ from = new Date(now.getTime()-6*24*3600*1000); }
+  else if(mode==='30'){ from = new Date(now.getTime()-29*24*3600*1000); }
+  else{ // this month
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+    to = new Date(now.getFullYear(), now.getMonth()+1, 0);
+  }
+  document.getElementById('pl-from').value = from.toISOString().slice(0,10);
+  document.getElementById('pl-to').value = to.toISOString().slice(0,10);
+  updateProfitLoss();
+}
+function updateProfitLoss(){
+  const fromStr = document.getElementById('pl-from').value || todayISO();
+  const toStr = document.getElementById('pl-to').value || todayISO();
+  const from = parseISO(fromStr).getTime();
+  const to   = parseISO(toStr).getTime();
+  const salesSum = sumInRange(sales, from, to);
+  const expSum   = sumInRange(expenses, from, to);
+  const net = salesSum
